@@ -70,15 +70,10 @@ const directionalLightHelper = new THREE.DirectionalLightHelper(
 // scene.add(directionalLightHelper);
 
 const glfLoader = new GLTFLoader();
-// glfLoader.load("dancer.glb", (gltf) => {
-// const character = gltf.scene;
-// character.position.y = 0.8;
-// character.scale.set(0.01, 0.01, 0.01);
-// scene.add(character);
-// });
 const gltf = await glfLoader.loadAsync("dancer.glb");
 console.log(gltf);
 const character = gltf.scene;
+const animationsClips = gltf.animations;
 character.position.y = 0.8;
 character.scale.set(0.01, 0.01, 0.01);
 character.castShadow = true; // 캐릭터가 그림자를 드리워 지도록 설정
@@ -91,6 +86,18 @@ character.traverse((child) => {
 });
 scene.add(character);
 
+const mixer = new THREE.AnimationMixer(character);
+const action = mixer.clipAction(animationsClips[3]); // 애니메이션 클립을 설정
+action.setLoop(THREE.LoopRepeat); // 애니메이션의 반복 설정
+// action.setDuration(10); // 애니메이션의 길이를 설정
+// action.setEffectiveTimeScale(2); // 애니메이션의 속도를 설정
+// action.setEffectiveWeight(0.5); // 애니메이션의 가중치를 설정
+action.play(); // 애니메이션을 실행
+
+setTimeout(() => {
+  mixer.clipAction(animationsClips[3]).paused = true; // 3초 후에 애니메이션을 멈춘다.
+}, 3000);
+
 const orbitControls = new OrbitControls(camera, renderer.domElement); // 카메라와 렌더러를 넣어준다.
 orbitControls.enableDamping = true; // 감속 설정
 orbitControls.dampingFactor = 0.03; // 감속 계수
@@ -102,10 +109,17 @@ window.addEventListener("resize", () => {
   renderer.render(scene, camera);
 });
 
+const clock = new THREE.Clock();
+
 const render = () => {
   renderer.render(scene, camera); // 렌더링을 수행한다.
   requestAnimationFrame(render); // 내부에서 자신을 호출하여 애니메이션을 수행한다.
   orbitControls.update(); // 컨트롤을 업데이트 해준다.
+  if (mixer) {
+    mixer.update(
+      clock.getDelta(),
+    ); /* 믹서를 업데이트 해준다. 믹서는 애니메이션을 업데이트 해주는 역할을 한다. */
+  }
 };
 
 render();
